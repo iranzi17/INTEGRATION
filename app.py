@@ -289,7 +289,7 @@ def hero_css(ui_settings: dict) -> dict:
         + hero_background_css
         + """;
             background-size: cover;
-            background-position: center;
+            background-position: center 15%;
             background-repeat: no-repeat;
             display: flex;
             flex-direction: column;
