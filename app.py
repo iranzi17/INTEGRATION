@@ -46,7 +46,10 @@ MAX_GPKG_NAME_LENGTH = 254
 
 # Persistent UI settings for hero/header
 UI_SETTINGS_PATH = BASE_DIR / "ui_settings.json"
-HERO_IMAGE_PATH = BASE_DIR / "rwanda_small_map.jpg"
+HERO_IMAGE_CANDIDATES = [
+    BASE_DIR / "WhatsApp Image 2026-01-10 at 14.33.56.jpeg",
+    BASE_DIR / "rwanda_small_map.jpg",
+]
 DEFAULT_HERO_HEIGHT = 320
 DEFAULT_HERO_LEFT_PCT = 35
 DEFAULT_HERO_RIGHT_PCT = 65
@@ -118,6 +121,13 @@ def load_base64_image(image_path: Path) -> str:
         return ""
 
 
+def _resolve_hero_image_path() -> Path | None:
+    for candidate in HERO_IMAGE_CANDIDATES:
+        if candidate.exists():
+            return candidate
+    return None
+
+
 def rerun_app():
     """Trigger a Streamlit rerun across both legacy and new APIs."""
     rerun_callback = getattr(st, "rerun", None) or getattr(st, "experimental_rerun", None)
@@ -164,13 +174,15 @@ def _current_hero_state(ui_settings: dict) -> dict:
 
 def hero_css(ui_settings: dict) -> dict:
     hero_state = _current_hero_state(ui_settings)
-    hero_bg_data = load_base64_image(HERO_IMAGE_PATH)
+    hero_image_path = _resolve_hero_image_path()
+    hero_bg_data = load_base64_image(hero_image_path) if hero_image_path else ""
     hero_background_layers = [
-        "linear-gradient(135deg, rgba(255, 255, 255, {start:.2f}) 0%, "
-        "rgba(248, 250, 252, {end:.2f}) 100%)".format(
+        "linear-gradient(135deg, rgba(0, 32, 96, {start:.2f}) 0%, "
+        "rgba(7, 89, 133, {end:.2f}) 100%)".format(
             start=hero_state["gradient_start"],
             end=hero_state["gradient_end"],
-        )
+        ),
+        "linear-gradient(120deg, rgba(17, 24, 39, 0.45), rgba(17, 24, 39, 0.10))",
     ]
     if hero_bg_data:
         hero_background_layers.append(f"url('data:image/jpeg;base64,{hero_bg_data}')")
@@ -302,21 +314,21 @@ def hero_css(ui_settings: dict) -> dict:
             position: relative;
             z-index: 2;
         }
-        .hero-right h1 {
-            font-size: 2.4rem;
-            font-weight: 700;
-            color: #0d47a1;
-            line-height: 1.3;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            margin: 0;
-            letter-spacing: -0.5px;
-        }
-        .hero-right .subtitle {
-            font-size: 1rem;
-            color: #1565c0;
-            margin-top: 1rem;
-            font-weight: 500;
-        }
+    .hero-right h1 {
+        font-size: 2.6rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        line-height: 1.3;
+        text-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+    .hero-right .subtitle {
+        font-size: 1rem;
+        color: #cbd5e1;
+        margin-top: 1rem;
+        font-weight: 500;
+    }
         
         /* Content Wrapper - Full width, center child elements */
         .content-wrapper {
