@@ -4,3 +4,4 @@ geopandas
 shapely
 pyogrio
 pydeck
+openpyxl
