@@ -5181,6 +5181,9 @@ def run_app() -> None:
                             logs.append(f"{dev_name}: skipped (no instances in sheet).")
                             continue
                         if dev_norm == normalize_for_compare("High Voltage Line") and line_bay_info:
+                            # ensure lists are always defined to avoid UnboundLocalError when bay data is missing
+                            expanded_instances: list[dict[str, Any]] = []
+                            expanded_geoms: list[Any] = []
                             bay_gdf = load_line_bay_layer(
                                 line_bay_info.get("path"),
                                 line_bay_info.get("layer"),
