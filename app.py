@@ -4330,6 +4330,7 @@ def run_app() -> None:
                     type_map_local = _extract_type_map(seq_entries)
 
                 block_assign = normalize_for_compare(device_name) in BLOCK_ASSIGN_DEVICES
+                strict_line_bay = normalize_for_compare(device_name) == normalize_for_compare("Line Bay")
 
                 def _build_seq_entry_order(total_rows: int, total_entries: int) -> list[int]:
                     if total_rows <= 0 or total_entries <= 0:
@@ -4645,10 +4646,10 @@ def run_app() -> None:
                                 continue
                             if f not in out_cols:
                                 out_cols[f] = pd.Series([pd.NA] * n, index=gdf_sup_local.index)
-                            fill_val = val.iloc[0] if isinstance(val, pd.Series) else val
-                            out_cols[f] = pd.Series([fill_val] * n, index=gdf_sup_local.index)
+                                fill_val = val.iloc[0] if isinstance(val, pd.Series) else val
+                                out_cols[f] = pd.Series([fill_val] * n, index=gdf_sup_local.index)
                     # If still no matches and sequential instances are provided, distribute them across rows.
-                    if matched_hits == 0 and seq_entries:
+                    if matched_hits == 0 and seq_entries and not strict_line_bay:
                         for row_rank, idx_row in enumerate(seq_row_indices):
                             entry = _pick_seq_entry_by_feeder(
                                 idx_row,
@@ -4669,7 +4670,7 @@ def run_app() -> None:
                             _maybe_fill_match_id(idx_row, entry)
 
                     # If some rows remain unmatched, fill those rows using sequential instances (feeder-aware) without overwriting matched rows.
-                    if (seq_entries and len(matched_indices) < n) or (
+                    if (not strict_line_bay and seq_entries and len(matched_indices) < n) or (
                         not seq_entries
                         and 'parsed_instances' in locals()
                         and len(parsed_instances) > 1
@@ -4887,11 +4888,19 @@ def run_app() -> None:
                         default_col = None
                         if candidate_cols:
                             lookup = {normalize_for_compare(c): c for c in candidate_cols}
-                            for pref in pref_cols:
-                                n = normalize_for_compare(pref)
-                                if n in lookup:
-                                    default_col = lookup[n]
-                                    break
+                            # For Line Bay, prefer the explicit name column to avoid sequential fallback.
+                            if normalize_for_compare(device_choice) == normalize_for_compare("Line Bay"):
+                                for pref in ["Line_Bay_Name", "Line Bay Name", "LineBayName"]:
+                                    n = normalize_for_compare(pref)
+                                    if n in lookup:
+                                        default_col = lookup[n]
+                                        break
+                            if default_col is None:
+                                for pref in pref_cols:
+                                    n = normalize_for_compare(pref)
+                                    if n in lookup:
+                                        default_col = lookup[n]
+                                        break
                             if default_col is None and len(gdf_preview) <= 1:
                                 # single-feature fallback to substation columns if present
                                 for pref in ["Substation ID", "SubstationID", "SUBSTATION NAMES"]:
